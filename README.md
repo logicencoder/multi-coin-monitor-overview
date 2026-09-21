@@ -83,7 +83,7 @@ See [REPOS.md](REPOS.md).
 
 ---
 
-## Feature examples (two per capability)
+## Operator workflows
 
 #### Multi-pair arbitrage screening
 1. You start the app — 250 enabled coins load and cards appear as MEXC REST and WS prices arrive.
