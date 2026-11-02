@@ -1,52 +1,55 @@
-# Multi-Coin Monitor — overview
+# Multi-Coin Monitor
 
-Public description of the **Multi-Coin Monitor** — MEXC spot price dashboard with CEX↔DEX arbitrage ranking. Private code: [multi-coin-monitor](https://github.com/logicencoder/multi-coin-monitor).
+FastAPI browser dashboard that streams **hundreds of MEXC spot pairs** over protobuf WebSockets, estimates **CEX↔DEX spread profit** on each card, and ranks opportunities on one sortable board. Built for **screening** many listings at once — not for unattended trading.
 
-## What it is
+Private code: [logicencoder/multi-coin-monitor](https://github.com/logicencoder/multi-coin-monitor). Pair list and per-coin tuners live in `stored_coins.json` in the private repo.
 
 **What:** FastAPI app plus browser UI streaming **200+ MEXC spot pairs** over protobuf WebSockets, computing directional profit estimates vs a Uniswap-style second leg, and highlighting the best spreads in real time.  
 **Why:** Manual one-pair tools do not scale when watching many listings for dislocations; operators need a single board with enable/disable per coin.  
 **Who:** Logic Encoder operator researching CEX↔DEX gaps; **not** a turnkey auto-trading product for visitors.
 
-## MEXC ingest (production-quality)
+- **Live coin grid** — each card shows MEXC price (last trade or order book bid/ask), simulated Uniswap price, best-direction profit in USD and percent, and expandable multi-notional opportunity rows.
+- **Fleet controls** — search, minimum profit filter, sort by profit, symbol, or last update, and toggles for profitable, unprofitable, and **hardset** cards (major symbols that stay visible even when spread is flat).
+- **Runtime enable/disable** — turn individual coins off without editing JSON; **Reload Coins** picks up config changes and restarts feeds.
+- **Stale detection** — cards fade when quotes stop updating so you do not act on dead data.
+- **Profit journal** — profitable hits append to dated files under `logs/` for later review.
 
-**What:** Multiple connections (50 pairs each) to `wss://wbs-api.mexc.com/ws`, aggregated deals and 20-level depth channels, custom protobuf parsing.  
-**Why:** MEXC rate limits and frame size require sharded connections; binary protos are mandatory at this scale.  
-**Who:** Operator sees live CEX prices that match what traders see on the exchange.
+**Read before acting:** Uniswap-side prices in this app are **simulated** from MEXC using per-coin buy/sell tuners — not a live on-chain quoter. Use the board to **shortlist** pairs. On-chain swap truth belongs in [eth-chain-swaps-monitor-overview](https://github.com/logicencoder/eth-chain-swaps-monitor-overview).
 
-## Arbitrage math (important limitation)
+## Tech stack
 
-**What:** For each coin, the UI ranks profits for notionals ($100–$1200) in both directions with CEX fee and a fixed gas estimate, using per-coin `buy_tuner` / `sell_tuner` from `stored_coins.json`.  
-**Why:** Quick screening of which pairs deserve deeper analysis in real on-chain monitors.  
-**Who:** Operator must understand: in this standalone app the **Uniswap leg is simulated** (derived from MEXC × tuners), not read from a live quoter. **Real DEX truth** lives in [eth-chain-swaps-monitor](https://github.com/logicencoder/eth-chain-swaps-monitor) on SOL — do not execute trades from this dashboard alone.
+| Layer | Technologies |
+|-------|--------------|
+| Backend | Python 3, FastAPI, uvicorn, asyncio, aiohttp, orjson, Decimal math |
+| Exchange feed | MEXC Spot V3 protobuf WebSocket (`generated_proto/` decoders) |
+| Frontend | Single-page dashboard — HTML, CSS, vanilla JavaScript |
+| Configuration | `stored_coins.json` — token address, Uniswap V3 pool, MEXC pair, buy/sell tuners, enabled flag |
+| Realtime | Browser WebSocket for `initial_data`, per-coin updates, and stats refresh |
+| Logging | Daily rotating app log plus `multi_coin_profits_YYYYMMDD.log` for profitable hits |
+| Hosting | Local development bind on port **8765** by default |
 
-## Dashboard features
+## Dashboard header and connection health
 
-**What:** WebSocket `coin_update` stream to the browser, REST filter/sort, per-coin enable flags, profit logging to dated log files.  
-**Why:** Reduce noise when only a subset of pairs matters; keep an audit trail of flagged opportunities.  
-**Who:** Operator tuning `stored_coins.json` without redeploying code.
+The sticky header shows **Total Coins**, **Profitable** count, active **Connections** (MEXC socket shards), and **Messages** received. A connection badge in the corner flips between connected and disconnected; the client reconnects with exponential backoff when the socket drops.
 
-## Stack (private repo)
+**Reload Coins** re-reads `stored_coins.json`, restarts WebSocket subscriptions for enabled entries, and clears the grid before fresh data arrives. If the socket is slow on first load, the UI falls back to a REST refresh after a few seconds.
 
-| Piece | Role |
-|-------|------|
-| `multi_coin_monitor.py` | FastAPI + MEXC WS hub |
-| `multi_coin_monitor.html` + `static/multi_coin_monitor.js` | UI |
-| `stored_coins.json` | Pair config |
-| `generated_proto/` | MEXC protobuf modules |
+## Filter and sort bar
 
-Default dev URL: `http://127.0.0.1:8765` on SOL/WSL.
+| Control | What it does |
+|---------|----------------|
+| **Search** | Filters by symbol or MEXC pair substring |
+| **Min Profit ($)** | Hides cards below a USD profit floor |
+| **Sort By** | Profit USD, profit percent, symbol, or last update time |
+| **Order** | Ascending or descending |
+| **Show Profitable / Unprofitable / Hardset** | Checkbox toggles for card classes |
 
-## Related repositories
+The grid caps visible cards at five hundred rows after filtering so the browser stays responsive during full-fleet runs.
 
-| Repo | Role |
-|------|------|
-| [multi-coin-monitor](https://github.com/logicencoder/multi-coin-monitor) | Private code |
-| [eth-chain-swaps-monitor](https://github.com/logicencoder/eth-chain-swaps-monitor) | Real on-chain swap monitoring |
-| [mexc_trading_app](https://github.com/logicencoder/mexc_trading_app) | Single-symbol MEXC trading UI |
+## Coin cards
 
-See [REPOS.md](REPOS.md).
+Each card uses border colour to signal state: green tint for profitable spreads, red for unprofitable, orange for **hardset** majors (ETH, BTC, stablecoins, and similar symbols always eligible to show), and dimmed grey when **stale**.
 
-## Licensing
+**Price row** — MEXC side shows last trade or order-book mode with bid/ask under the headline when depth is available. Uniswap side shows the tuned simulated price used for spread math.
 
 © Logic Encoder.
