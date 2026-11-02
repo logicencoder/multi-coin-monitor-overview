@@ -6,7 +6,7 @@ Public description of the **Multi-Coin Monitor** — MEXC spot price dashboard w
 
 **What:** FastAPI app plus browser UI streaming **200+ MEXC spot pairs** over protobuf WebSockets, computing directional profit estimates vs a Uniswap-style second leg, and highlighting the best spreads in real time.  
 **Why:** Manual one-pair tools do not scale when watching many listings for dislocations; operators need a single board with enable/disable per coin.  
-**Who:** LogicEncoder operator researching CEX↔DEX gaps; **not** a turnkey auto-trading product for visitors.
+**Who:** Logic Encoder operator researching CEX↔DEX gaps; **not** a turnkey auto-trading product for visitors.
 
 ## MEXC ingest (production-quality)
 
@@ -49,4 +49,4 @@ See [REPOS.md](REPOS.md).
 
 ## Licensing
 
-© LogicEncoder.
+© Logic Encoder.
