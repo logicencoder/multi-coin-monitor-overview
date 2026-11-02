@@ -79,7 +79,7 @@ Open the dashboard at `http://127.0.0.1:8765` on the machine running the worker.
 
 Private code: [multi-coin-monitor](https://github.com/logicencoder/multi-coin-monitor)
 
-See [REPOS.md](REPOS.md).
+Expanded opportunities present a ladder of trade sizes in both directions, with estimated quantities, amounts and returns. This supports examining how a displayed comparison changes with the proposed size.
 
 ---
 
