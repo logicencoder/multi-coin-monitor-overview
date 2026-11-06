@@ -1,52 +1,35 @@
 # Multi-Coin Monitor — Market Screening
 
-Reviewing many markets one pair at a time makes it difficult to decide where to look next. Multi-Coin Monitor brings a tracked collection into a searchable card board with live MEXC information, comparison estimates and visible feed health.
-
-Its role is screening: narrow a larger set of markets to candidates worth investigating, then take that question to the relevant market or trading tools. The Uniswap leg is simulated and must not be mistaken for an executable DEX quote.
+Comparing a coin between a centralised exchange and a Uniswap pool one pair at a time makes it hard to decide where to look next. Multi-Coin Monitor tracks a stored collection of coins at once: the MEXC price arrives live, the price in each coin's Uniswap V2 or V3 pool is read from an Ethereum node, and a card board shows which coins currently differ enough to be worth a closer look. It is a screening board for one operator, and every figure is an estimate calculated from observed prices, not an executable quote.
 
 ## Tech stack
 
 | Layer | Technologies |
 |---|---|
-| Application | Python, FastAPI |
-| Market feed | MEXC, Protocol Buffers |
-| Interface | HTML, CSS, JavaScript |
+| Application | Python with FastAPI, a WebSocket feed to the browser |
+| MEXC data | MEXC WebSocket with Protocol Buffers messages, bid and ask prices and order-book depth |
+| Ethereum data | Web3.py and eth-defi against an Ethereum node, reading Uniswap V2 reserves and V3 pool state |
+| Interface | HTML, CSS and JavaScript card board |
 
-## Start with the collection's current state
+## Header and connection state
 
-The header brings tracked-coin counts, highlighted opportunities, connection activity and received messages together. Connection indicators help establish whether the board is receiving observations before interpreting an apparently quiet market.
+The header shows the number of tracked coins, how many are currently profitable, the connection status, active connections and the count of messages received. A Reload coins button stops the monitoring, clears the state and reloads the stored collection, which is the way to apply a changed list. The status helps tell a quiet market from a board that is not receiving data.
 
-A reload control supports bringing the configured coin collection back into the session. The operator can distinguish the tracked selection from the cards currently visible after filtering.
+## Search, filter and sort
 
-## Find the markets relevant to the question
+A search box narrows the cards by symbol or pair, and a minimum-profit field hides coins below a dollar amount. Switches show or hide profitable and unprofitable coins, so the board can be reduced to the coins with a gap or widened to see everything. Cards sort by profit in USD, profit in percent, symbol or last update, ascending or descending.
 
-Search narrows cards by symbol or pair. Minimum-profit, sort-order and card-class controls help focus the board on a particular research task.
+## Reading a card
 
-Sort by amount, percentage, symbol or update time depending on the question. Include or hide the supported profitable, unprofitable and always-shown classes rather than treating one default view as the only useful comparison.
+Each card shows the MEXC price with its bid and ask, the Uniswap price of the coin's pool, the direction with the better outcome (buy on MEXC and sell on Uniswap, or the reverse), and the estimated profit in dollars and percent. The MEXC side can follow the last trade or the order book, and each coin has a buy and a sell adjustment factor that tunes the prices it compares. A card is marked stale when one of the two prices is missing or zero, so an old observation is not read as a current one.
 
-## Read a card before following its headline
+## Trade sizes
 
-Each card brings the MEXC price and available bid/ask context together with the simulated comparison side. Direction, amount and percentage estimates are shown alongside the observation's current state.
+An expanded card lists the result for nine trade sizes in dollars: 100, 150, 200, 250, 300, 400, 500, 750 and 1,000, in both directions. For each size the MEXC side walks the order book to get the average price and the price impact, and the DEX side is taken from the pool: the constant-product formula with the 0.3 percent fee for V2, and the pool's own price estimate for V3, with its impact. The profit shown is the gap between those two prices at that size. MEXC trading fees and Ethereum gas are not deducted, so the figure is the price difference, not take-home profit, and real execution can differ.
 
-Card appearance distinguishes highlighted, unprofitable, always-shown and stale entries. This helps the operator notice that an old observation and a current market reading require different interpretation.
+## Maintaining the collection
 
-## Compare sizes and directions
-
-Expanded opportunities present a ladder of trade sizes in both directions, with estimated quantities, amounts and returns. This supports examining how a displayed comparison changes with the proposed size.
-
-The DEX side uses configured simulation adjustments and assumed costs. These are screening scenarios, not evidence of available on-chain liquidity, a firm quote or achievable profit.
-
-## Maintain the tracked selection
-
-The operator controls which coin entries belong in the collection and which are enabled. Per-coin comparison adjustments support testing different scenarios while keeping them associated with the relevant market.
-
-Review the selection and reload it when the research universe changes. That gives repeated screening a consistent starting point without implying that every listed market is suitable for execution.
-
-## Keep observations available for review
-
-Update times, connection information and retained activity support following a session and revisiting highlighted observations. When a candidate needs deeper investigation, the related swap-monitoring tools provide another part of that research workflow.
-
-The board's practical value is prioritisation: compare a broad set, identify a question and inspect it further with an understanding of the estimate's assumptions.
+The stored collection holds, for each coin, its MEXC pair, token address, pool address, pool fee tier and the two adjustment factors. A coin can be enabled or disabled through the API, and the collection is reloaded from storage on request. When a coin needs a deeper look, the Ethereum swap monitoring tools provide the next step.
 
 ---
 
